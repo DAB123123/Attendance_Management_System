@@ -64,7 +64,7 @@ if(isset($_POST['login'])) {
             <h1>Online Attendance Management System 1.0</h1>
         </header>
         
-        <h2>Login</h2>
+        <center><h2>Login</h2></center>
         
         <?php
         // Printing error message
