@@ -1,179 +1,118 @@
 <?php
+if(isset($_POST['login'])) {
+    try {
+        // Checking empty fields
+        if(empty($_POST['username'])) {
+            throw new Exception("Username is required!");
+        }
+        if(empty($_POST['password'])) {
+            throw new Exception("Password is required!");
+        }
 
-if(isset($_POST['login']))
-{
-	//start of try block
+        // Establishing connection with db (including connect.php)
+        require_once('connect.php');
 
-	try{
+        // Checking login info into database
+        $stmt = $conn->prepare("SELECT * FROM admininfo WHERE username=:username AND password=:password AND type=:type");
+        $stmt->bindParam(":username", $_POST['username']);
+        $stmt->bindParam(":password", $_POST['password']);
+        $stmt->bindParam(":type", $_POST['type']);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		//checking empty fields
-		if(empty($_POST['username'])){
-			throw new Exception("Username is required!");
-			
-		}
-		if(empty($_POST['password'])){
-			throw new Exception("Password is required!");
-			
-		}
-		//establishing connection with db and things
-		include ('connect.php');
-		
-		//checking login info into database
-		$row=0;
-		$result=mysql_query("select * from admininfo where username='$_POST[username]' and password='$_POST[password]' and type='$_POST[type]'");
+        if($result) {
+            session_start();
+            $_SESSION['name'] = "oasis";
 
-		$row=mysql_num_rows($result);
+            // Redirect based on user type
+            if($_POST["type"] == 'teacher') {
+                header('Location: teacher/index.php');
+                exit;
+            } elseif($_POST["type"] == 'student') {
+                header('Location: student/index.php');
+                exit;
+            } elseif($_POST["type"] == 'admin') {
+                header('Location: admin/index.php');
+                exit;
+            }
+        } else {
+            throw new Exception("Username, Password, or Role is wrong, try again!");
+        }
+    } catch(Exception $e) {
+        $error_msg = $e->getMessage();
+        echo $error_msg; // Display error message
+    }
 
-		if($row>0 && $_POST["type"] == 'teacher'){
-			session_start();
-			$_SESSION['name']="oasis";
-			header('location: teacher/index.php');
-		}
-
-		else if($row>0 &&  $_POST["type"] == 'student'){
-			session_start();
-			$_SESSION['name']="oasis";
-			header('location: student/index.php');
-		}
-
-		else if($row>0 && $_POST["type"] == 'admin'){
-			session_start();
-			$_SESSION['name']="oasis";
-			header('location: admin/index.php');
-		}
-
-		else{
-			throw new Exception("Username,Password or Role is wrong, try again!");
-			
-			header('location: login.php');
-		}
-	}
-
-	//end of try block
-	catch(Exception $e){
-		$error_msg=$e->getMessage();
-	}
-	//end of try-catch
+    // Closing the statement and connection
+    $stmt = null; // Close statement
+    $conn = null; // Close connection
 }
-
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-
-	<title>Online Attendance Management System</title>
-	<link rel="stylesheet" type="text/css" href="css/main.css">
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
-	 
-	<!-- Optional theme -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" >
-	 
-	<link rel="stylesheet" href="styles.css" >
-	 
-	<!-- Latest compiled and minified JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
+    <title>Online Attendance Management System</title>
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-	<center>
+    <div class="container">
+        <header>
+            <h1>Online Attendance Management System 1.0</h1>
+        </header>
+        
+        <h2>Login</h2>
+        
+        <?php
+        // Printing error message
+        if(isset($error_msg)) {
+            echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($error_msg) . '</div>';
+        }
+        ?>
 
-<header>
+        <form method="post" class="form-horizontal">
+            <div class="form-group">
+                <label for="username" class="col-sm-3 control-label">Username</label>
+                <div class="col-sm-7">
+                    <input type="text" name="username" class="form-control" id="username" placeholder="Your username" required>
+                </div>
+            </div>
 
-  <h1>Online Attendance Management System 1.0</h1>
+            <div class="form-group">
+                <label for="password" class="col-sm-3 control-label">Password</label>
+                <div class="col-sm-7">
+                    <input type="password" name="password" class="form-control" id="password" placeholder="Your password" required>
+                </div>
+            </div>
 
-</header>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Role</label>
+                <div class="col-sm-7">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="student" checked> Student
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="teacher"> Teacher
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="type" value="admin"> Admin
+                    </label>
+                </div>
+            </div>
 
-<h1>Login</h1>
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-10">
+                    <button type="submit" class="btn btn-primary" name="login">Login</button>
+                    <button type="reset" class="btn btn-default">Reset</button>
+                </div>
+            </div>
+        </form>
 
-<?php
-//printing error message
-if(isset($error_msg))
-{
-	echo $error_msg;
-}
-?>
-
-<!-- Old Version -->
-<!-- 
-<form action="" method="post">
-	
-	<table>
-		<tr>
-			<td>Username </td>
-			<td><input type="text" name="username"></input></td>
-		</tr>
-		<tr>
-			<td>Password</td>
-			<td><input type="password" name="password"></input></td>
-		</tr>
-		<tr>
-			<td>Role</td>
-			<td>
-			<select name="type">
-				<option name="teacher" value="teacher">Teacher</option>
-				<option name="student" value="student">Student</option>
-				<option name="admin" value="admin">Admin</option>
-			</select>
-			</td>
-		</tr>
-		<tr><td><br></td></tr>
-		<tr>
-			<td><button><input type="submit" name="login" value="Login"></input></button></td>
-			<td><button><input type="reset" name="reset" value="Reset"></button></td>
-		</tr>
-	</table>
-</form>
--->
-
-<div class="content">
-	<div class="row">
-
-		<form method="post" class="form-horizontal col-md-6 col-md-offset-3">
-			<div class="form-group">
-			    <label for="input1" class="col-sm-3 control-label">Username</label>
-			    <div class="col-sm-7">
-			      <input type="text" name="username"  class="form-control" id="input1" placeholder="your username" />
-			    </div>
-			</div>
-
-			<div class="form-group">
-			    <label for="input1" class="col-sm-3 control-label">Password</label>
-			    <div class="col-sm-7">
-			      <input type="password" name="password"  class="form-control" id="input1" placeholder="your password" />
-			    </div>
-			</div>
-
-
-			<div class="form-group" class="radio">
-			<label for="input1" class="col-sm-3 control-label">Role</label>
-			<div class="col-sm-7">
-			  <label>
-			    <input type="radio" name="type" id="optionsRadios1" value="student" checked> Student
-			  </label>
-			  	  <label>
-			    <input type="radio" name="type" id="optionsRadios1" value="teacher"> Teacher
-			  </label>
-			  <label>
-			    <input type="radio" name="type" id="optionsRadios1" value="admin"> Admin
-			  </label>
-			</div>
-			</div>
-
-
-			<input type="submit" class="btn btn-primary col-md-3 col-md-offset-7" value="Login" name="login" />
-		</form>
-	</div>
-</div>
-
-
-
-<br><br>
-<p><strong>Have forgot your password? <a href="reset.php">Reset here.</a></strong></p>
-<p><strong>If you don't have any account, <a href="signup.php">Signup</a> here</strong></p>
-
-</center>
+        <p><strong>Forgot your password? <a href="reset.php">Reset here.</a></strong></p>
+        <p><strong>Don't have an account? <a href="signup.php">Sign up here.</a></strong></p>
+    </div>
 </body>
 </html>
